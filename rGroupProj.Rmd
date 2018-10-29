@@ -1,0 +1,42 @@
+---
+title: "R Group Project-Cleaning data"
+author: "kangwei"
+date: "October 28, 2018"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Stock datasets
+
+The dataset selected is a stock datasets. It contain details about stocks that have been collected over several years, 2012 to 2015.
+
+Loading the dataset:
+```{r }
+path <- file.path("E:\\academic\\mds-sem2\\WQD7004-Rprogramming\\groupProjectData\\")
+fundamentalPath <- file.path(path, "fundamentals.csv")
+
+stockDf <- read.csv(fundamentalPath)
+```
+
+Dimension of the dataset loaded
+```{r dimension}
+dim(stockDf)
+```
+
+Structure of the dataset
+```{r structure}
+str(stockDf)
+```
+
+View the data
+```{r view}
+View(stockDf)
+```
+
+The data contains some rows of same stock or ticket symbol with different date
+```{r }
+sum(stockDf$Ticker.Symbol=='APL')
+```
