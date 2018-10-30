@@ -1,10 +1,16 @@
 # R group project
 
-# Reading the file
-path <- file.path("E:\\academic\\mds-sem2\\WQD7004-Rprogramming\\groupProjectData\\")
-fundamentalPath <- file.path(path, "fundamentals.csv")
+# Reading the 20 source files
+setwd('./nyse-financial-stocks/')
+files <- list.files(pattern = "*.csv")
+colNames <- c("Date", "Financial Institution", "Location", "High", "Low", "Open", "Close", 
+              "Aggregated data 2 days", "Aggregated data 3 days", "Aggregated data 5 days",
+              "Volume", "Number of employees", "Net change 0 (numeric)", "Net change 0 (Nominal)",
+              "Net change 5 (numeric)", "Net change 5 (nominal)", "Net change 25 (numeric)", 
+              "Net change 25 (nominal)")
+stockDf <- do.call(rbind, lapply(files, function(x) read.csv(x, stringsAsFactors = FALSE,
+                  header = TRUE, col.names = colNames)))
 
-stockDf <- read.csv(fundamentalPath)
 
 # Exploring the data
 head(stockDf)
@@ -15,22 +21,10 @@ str(stockDf)
 # View the data to get a big picture
 View(stockDf)
 
-# Remove the first column because it is just a column number
-stockDf <- stockDf[, -1]
-dim(stockDf)
-
-# Check how many rows belong to AAL
-sum(stockDf$Ticker.Symbol=='AAL')
-
-# Subset by stock
-aalStock <- subset(stockDf, stockDf$Ticker.Symbol=='AAL')
-dim(aalStock)
-View(aalStock)
-
 # change the date format in the datasets
 library(lubridate)
 library(dplyr)
-stockDf$Period.Ending <- dmy(stockDf$Period.Ending)
+stockDf$Date <- dmy(stockDf$Date)
 str(stockDf)
 glimpse(stockDf)
 View(stockDf)
