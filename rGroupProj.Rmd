@@ -9,34 +9,91 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+```{r libraryLoad, include=FALSE}
+library(lubridate)
+library(dplyr)
+library(knitr)
+```
+
 ## Stock datasets
 
-The dataset selected is a stock datasets. It contain details about stocks that have been collected over several years, 2012 to 2015.
+The dataset selected is a stock datasets. It contain details about some stocks that have been collected over several years, 2012 to 2017. The dataset for the stocks are stored on 20 CSV files. There is another CSV file namely securities.csv that contains the information about the stock companies.
 
-Loading the dataset:
+First the 20 csv files are loaded at once and rbind the data frames together, since they have the same columns.
+
+However, not all the columns names in the files are identical, different files have some differences in spacing. The data frames can't be rbind if the column names are not identical. Therefore, the column names are given in a vector rather than using what is given on the CSV files. Rbind is carried out by ignoring the column names and column names for the data frame would be assigned.
+
 ```{r }
-path <- file.path("E:\\academic\\mds-sem2\\WQD7004-Rprogramming\\groupProjectData\\")
-fundamentalPath <- file.path(path, "fundamentals.csv")
+setwd('./nyse-financial-stocks/')
+files <- list.files(pattern = "*.csv")
+colNames <- c("Date", "Financial Institution", "Location", "High", "Low", "Open", "Close", 
+              "Aggregated data 2 days", "Aggregated data 3 days", "Aggregated data 5 days",
+              "Volume", "Number of employees", "Net change 0 (numeric)", "Net change 0 (Nominal)",
+              "Net change 5 (numeric)", "Net change 5 (nominal)", "Net change 25 (numeric)", 
+              "Net change 25 (nominal)")
+stockDf <- do.call(rbind, lapply(files, function(x) read.csv(x, stringsAsFactors = FALSE,
+                  header = TRUE, col.names = colNames)))
 
-stockDf <- read.csv(fundamentalPath)
+companyDetails <- read.csv('../securities.csv', stringsAsFactors = FALSE)
 ```
 
 Dimension of the dataset loaded
 ```{r dimension}
 dim(stockDf)
+dim(companyDetails)
 ```
 
-Structure of the dataset
-```{r structure}
+<br>
+
+Structure of the stock data frame
+```{r stockStructure}
 str(stockDf)
 ```
+Date column is not in date format.<br>
+Number of employees columns is in character, not numeric.
+
+<br>
+
+Structure of the company details data frame
+```{r companyStructure}
+str(companyDetails)
+```
+Date first added is not in date format.<br>
+CIK number is in integer form, can be either change to factor or remain as int.
+
+<br>
+
+Fix the date formats in the dataset
+```{r dateFormatting}
+stockDf$Date <- dmy(stockDf$Date)
+
+companyDetails$Date.first.added <- dmy(companyDetails$Date.first.added)
+```
+
+Fix the number of employees format into numeric
+```{r changeToNumeric}
+stockDf$Number.of.employees <- as.numeric(stockDf$Number.of.employees)
+```
+
+<br>
+
+Check the structure of the data after converting
+```{r formatVerification}
+str(stockDf)
+str(companyDetails)
+```
+The incorrect data formats are not correctly represented.
+
+<br>
 
 View the data
 ```{r view}
-View(stockDf)
+kable(head(stockDf, 10), format="markdown")
+kable(head(companyDetails, 10, format='markdown'))
 ```
 
-The data contains some rows of same stock or ticket symbol with different date
+<br>
+
 ```{r }
-sum(stockDf$Ticker.Symbol=='APL')
+sum(stockDf$Financial.Institution=='AXP')
 ```
