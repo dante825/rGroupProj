@@ -3,13 +3,13 @@
 # Reading the 20 source files
 setwd('./nyse-financial-stocks/')
 files <- list.files(pattern = "*.csv")
-colNames <- c("Date", "Financial Institution", "Location", "High", "Low", "Open", "Close", 
+stockCol <- c("Date", "Financial Institution", "Location", "High", "Low", "Open", "Close", 
               "Aggregated data 2 days", "Aggregated data 3 days", "Aggregated data 5 days",
               "Volume", "Number of employees", "Net change 0 (numeric)", "Net change 0 (Nominal)",
               "Net change 5 (numeric)", "Net change 5 (nominal)", "Net change 25 (numeric)", 
               "Net change 25 (nominal)")
 stockDf <- do.call(rbind, lapply(files, function(x) read.csv(x, stringsAsFactors = FALSE,
-                  header = TRUE, col.names = colNames)))
+                  header = TRUE, col.names = stockCol)))
 
 companyDetails <- read.csv('../securities.csv', stringsAsFactors = FALSE)
 
@@ -46,6 +46,10 @@ glimpse(stockDf)
 str(companyDetails)
 glimpse(companyDetails)
 
+# Check if there is NA in the dataset
+sum(is.na(stockDf))
+sum(is.na(companyDetails))
+
 # Check unique stock
 unique(stockDf$Financial.Institution)
 length(unique(stockDf$Financial.Institution))
@@ -60,17 +64,32 @@ getCompanyDetails <- function(tickerSym) {
   return(stock)
 }
 
+getCompanyName <- function(tickerSym) {
+  companyName <- companyDetails[which(companyDetails$Ticker.symbol==tickerSym),]$Security
+  return(companyName)
+}
+
 getCompanyDetails(tickerSym = 'AXP')
 getCompanyDetails(tickerSym = 'BAC')
 getCompanyDetails('C')
 
-# Create a new column for company name
-# This method, merge the 2 datasets, need to remove alot of columns
-mergeData <- merge(stockDf, companyDetails, by.x = c('Financial.Institution'), by.y = c('Ticker.symbol'))
-View(mergeData)
+getCompanyName(tickerSym = 'AXP')
+getCompanyName(tickerSym = 'ABT')
+getCompanyName(tickerSym = 'ALB')
 
+# Merge the 2 dataset
+stockData <- merge(stockDf, companyDetails, by.x = c('Financial.Institution'), by.y = c('Ticker.symbol'))
+View(stockData)
+colnames(stockData)
 
-stockDf$Company <- lapply(stockDf$Financial.Institution, getCompanyDetails(tickerSym = stockDf$Financial.Institution))
+# Remove unneeded columns
+stockData <- select(stockData, c("Date", "Financial.Institution", "High", "Low", "Open", "Close", 
+                                  "Volume", "Security", "GICS.Sector", "GICS.Sub.Industry"))
+colnames(stockData)
+names(stockData) <- c("Date", "StockCode", "High", "Low", "Open", "Close", "Volume", "Company", "Sector", "Sub-industry")
+colnames(stockData)
+View(stockData)
 
-getCompanyDetails(tickerSym = 'AXP')$Security
-mutate(stockDf, getCompanyDetails(stockDf$Financial.Institution)$Security)
+# Check the number of NAs
+sum(is.na(stockData)) # No NA after removing unnecessary columns
+
