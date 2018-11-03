@@ -102,6 +102,7 @@ plotClosing <- function(code) {
 
 plotClosing(code="BAC")
 
+<<<<<<< HEAD
 # Converting dataframe to timeseries and get the monthly returns
 library(xts)
 library(quantmod)
@@ -124,7 +125,22 @@ library(lubridate)
 
 test_date <-  stockDf$Date
 head(test_date)
+||||||| merged common ancestors
+=======
+# Converting dataframe to timeseries and get the monthly returns
+library(xts)
+library(quantmod)
 
+getMonthlyReturn <- function(code) {
+  df <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017')) %>% 
+    select(Date, High, Low, Open, Close, Volume)
+  ts <- xts(df[,-1], order.by = df$Date) 
+  monthly <- monthlyReturn(ts, type='log')
+  return(monthly)
+}
+>>>>>>> ed85dd2279ebfc4892780969e04a522ebba208f1
+
+<<<<<<< HEAD
 start_date <- "30/11/2012"
 end_date <-  "30/12/2016"
 
@@ -142,7 +158,22 @@ plotMonthlyReturns <- function(monthly, code) {
   plot(monthly, main=paste("Monthly Returns for", getCompanyName(code)), ylab = "Monthly returns, $", type='l')
 }
 plotMonthlyReturns(jpmMonthly, 'JPM')
+||||||| merged common ancestors
+##---calcualting Sharpe ratio 
+=======
+jpmMonthly <- getMonthlyReturn('JPM')
+head(jpmMonthly)
+>>>>>>> ed85dd2279ebfc4892780969e04a522ebba208f1
 
+plotMonthlyReturns <- function(monthly, code) {
+  plot(monthly, main=paste("Monthly Returns for", getCompanyName(code)), ylab = "Monthly returns, $", type='l')
+}
+plotMonthlyReturns(jpmMonthly, 'JPM')
+
+##---calcualting Sharpe ratio 
+library(PerformanceAnalytics)
+sharpeRatio <- round(SharpeRatio(jpmMonthly, Rf=.0003), 4)
+sharpeRatio
 
 ##---calcualting Sharpe ratio 
 library(PerformanceAnalytics)
