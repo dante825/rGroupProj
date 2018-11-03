@@ -13,6 +13,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(lubridate)
 library(dplyr)
 library(knitr)
+library(stringr)
 ```
 
 ## Stock datasets
@@ -23,7 +24,8 @@ First the 20 csv files are loaded at once and rbind the data frames together, si
 
 However, not all the columns names in the files are identical, different files have some differences in spacing. The data frames can't be rbind if the column names are not identical. Therefore, the column names are given in a vector rather than using what is given on the CSV files. Rbind is carried out by ignoring the column names and column names for the data frame would be assigned.
 
-```{r }
+### Load the dataset
+```{r loadData}
 setwd('./nyse-financial-stocks/')
 files <- list.files(pattern = "*.csv")
 colNames <- c("Date", "Financial Institution", "Location", "High", "Low", "Open", "Close", 
@@ -63,6 +65,7 @@ CIK number is in integer form, can be either change to factor or remain as int.
 
 <br>
 
+### Fix the format of the data
 Fix the date formats in the dataset
 ```{r dateFormatting}
 stockDf$Date <- dmy(stockDf$Date)
@@ -72,6 +75,7 @@ companyDetails$Date.first.added <- dmy(companyDetails$Date.first.added)
 
 Fix the number of employees format into numeric
 ```{r changeToNumeric}
+stockDf$Number.of.employees <- str_replace(stockDf$Number.of.employees, pattern = ',', replacement = '')
 stockDf$Number.of.employees <- as.numeric(stockDf$Number.of.employees)
 ```
 
@@ -86,7 +90,7 @@ The incorrect data formats are not correctly represented.
 
 <br>
 
-View the data
+### View the data
 ```{r view}
 kable(head(stockDf, 10), format="markdown")
 kable(head(companyDetails, 10, format='markdown'))
@@ -94,6 +98,95 @@ kable(head(companyDetails, 10, format='markdown'))
 
 <br>
 
-```{r }
-sum(stockDf$Financial.Institution=='AXP')
+Check if the data has NA
+```{r checkNa}
+sum(is.na(stockDf))
+sum(is.na(companyDetails))
 ```
+There are some NA values in the datasets but let's move on first because we would remove some columns.
+
+<br>
+
+Check the number of distinct stocks in the dataset
+```{r checkDistinctStock}
+unique(stockDf$Financial.Institution)
+length(unique(stockDf$Financial.Institution))
+
+unique(companyDetails$Ticker.symbol)
+length(unique(companyDetails$Ticker.symbol))
+```
+
+<br>
+
+Functions to get stock details
+```{r stockDetails}
+# Function  to get stock details
+getCompanyDetails <- function(tickerSym) {
+  stock <- companyDetails[which(companyDetails$Ticker.symbol==tickerSym),]
+  return(stock)
+}
+
+getCompanyName <- function(tickerSym) {
+  companyName <- companyDetails[which(companyDetails$Ticker.symbol==tickerSym),]$Security
+  return(companyName)
+}
+
+getCompanyDetails(tickerSym = 'AXP')
+getCompanyDetails(tickerSym = 'BAC')
+getCompanyDetails('C')
+
+getCompanyName(tickerSym = 'AXP')
+getCompanyName(tickerSym = 'ABT')
+getCompanyName(tickerSym = 'ALB')
+```
+
+<br>
+
+### Merge the 2 dataset together
+```{r mergeDataset}
+stockData <- merge(stockDf, companyDetails, by.x = c('Financial.Institution'), by.y = c('Ticker.symbol'))
+colnames(stockData)
+```
+
+<br>
+
+### Remove some columns
+```{r removeCol}
+stockData <- select(stockData, c("Date", "Financial.Institution", "High", "Low", "Open", "Close", 
+                                  "Volume", "Security", "GICS.Sector", "GICS.Sub.Industry"))
+colnames(stockData)
+# Rename the columns
+names(stockData) <- c("Date", "StockCode", "High", "Low", "Open", "Close", "Volume", "Company", "Sector", "Sub-industry")
+colnames(stockData)
+```
+
+<br>
+
+### View the finalize dataset
+```{r viewFinalizeData}
+kable(head(stockData, 10), format="markdown")
+```
+<br>
+
+Check the number of NA again after cleaning
+```{r checkNa2}
+sum(is.na(stockData))
+```
+No NA now, after removing the columns
+
+<br>
+
+Function to visualize the data
+```{r plotFunction}
+plotClosing <- function(code) {
+  subStock <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017'))
+  plot(x = subStock$Date, y = subStock$Close, main=paste("Closing price for", getCompanyName(code)),
+       xlab="Year 2017", ylab="Closing Price, $", type='l')
+}
+
+plotClosing(code="BAC")
+```
+
+<br>
+
+Next part maybe calculated sharpeRatio, moving averages or something
