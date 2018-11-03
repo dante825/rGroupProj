@@ -93,3 +93,12 @@ View(stockData)
 # Check the number of NAs
 sum(is.na(stockData)) # No NA after removing unnecessary columns
 
+# Visualize some of the data
+plotClosing <- function(code) {
+  subStock <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017'))
+  plot(x = subStock$Date, y = subStock$Close, main=paste("Closing price for", getCompanyName(code)),
+       xlab="Year 2017", ylab="Closing Price, $", type='l')
+}
+
+plotClosing(code="BAC")
+
