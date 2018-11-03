@@ -102,10 +102,6 @@ plotClosing <- function(code) {
 
 plotClosing(code="BAC")
 
-<<<<<<< HEAD
-
-##---calcualting Sharpe ratio 
-=======
 # Converting dataframe to timeseries and get the monthly returns
 library(xts)
 library(quantmod)
@@ -118,37 +114,19 @@ getMonthlyReturn <- function(code) {
   return(monthly)
 }
 
-<<<<<<< HEAD
-##---calcualting Sharpe ratio
-install.packages("dplyr")
-library(dplyr)
-
-install.packages("lubridate")
-library(lubridate)
-
-test_date <-  stockDf$Date
-head(test_date)
-
-start_date <- "30/11/2012"
-end_date <-  "30/12/2016"
-
-stockDf$Date[start_date]
-
-
-||||||| merged common ancestors
-##---calcualting Sharpe ratio 
-=======
 jpmMonthly <- getMonthlyReturn('JPM')
 head(jpmMonthly)
->>>>>>> ed85dd2279ebfc4892780969e04a522ebba208f1
 
 plotMonthlyReturns <- function(monthly, code) {
   plot(monthly, main=paste("Monthly Returns for", getCompanyName(code)), ylab = "Monthly returns, $", type='l')
 }
 plotMonthlyReturns(jpmMonthly, 'JPM')
->>>>>>> parent of 7cc8afd... Merge branch 'master' of https://github.com/dante825/rGroupProj
 
 
+##---calcualting Sharpe ratio 
+library(PerformanceAnalytics)
+sharpeRatio <- round(SharpeRatio(jpmMonthly, Rf=.0003), 4)
+sharpeRatio
 
 ##-- Creating portfolio of selected finnacial institutions
 
