@@ -102,3 +102,13 @@ plotClosing <- function(code) {
 
 plotClosing(code="BAC")
 
+
+##---calcualting Sharpe ratio 
+
+
+
+
+
+
+
+
