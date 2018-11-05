@@ -94,13 +94,13 @@ View(stockData)
 sum(is.na(stockData)) # No NA after removing unnecessary columns
 
 # Visualize some of the data
-plotClosing <- function(code) {
+plotClosePrice <- function(code) {
   subStock <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017'))
   plot(x = subStock$Date, y = subStock$Close, main=paste("Closing price for", getCompanyName(code)),
        xlab="Year 2017", ylab="Closing Price, $", type='l')
 }
 
-plotClosing(code="BAC")
+plotClosePrice(code="BAC")
 
 # Converting dataframe to timeseries and get the monthly returns
 library(xts)
@@ -123,16 +123,52 @@ plotMonthlyReturns <- function(monthly, code) {
 plotMonthlyReturns(jpmMonthly, 'JPM')
 
 
-##---calcualting Sharpe ratio 
+# Calculate Sharpe ratio 
 library(PerformanceAnalytics)
 sharpeRatio <- round(SharpeRatio(jpmMonthly, Rf=.0003), 4)
 sharpeRatio
 
-##-- Creating portfolio of selected finnacial institutions
+# Select a portfolio of stocks: Citigroup Inc (C), Goldman Sachs Group (GS), JPMorgan Chase & Co. (JPM)
+# Sun Trust Bank (STI), Wells Fargo (WFC)
+cMonthly <- getMonthlyReturn('C')
+names(cMonthly) <- 'Citigroup'
+gsMonthly <- getMonthlyReturn('GS')
+names(gsMonthly) <- 'GS'
+jpmMonthly <- getMonthlyReturn('JPM')
+names(jpmMonthly) <- 'JPM'
+stiMonthly <- getMonthlyReturn('STI')
+names(stiMonthly) <- 'STI'
+wfcMonthly <- getMonthlyReturn('WFC')
+names(wfcMonthly) <- 'WFC'
+
+mergedReturns <- merge.xts(cMonthly, gsMonthly, jpmMonthly, stiMonthly, wfcMonthly)
+
+library(dygraphs)
+dygraph(mergedReturns, paste(getCompanyName('C'), 'v', getCompanyName('GS'), 'v', getCompanyName('JPM'),
+                             'v', getCompanyName('STI'), 'v', getCompanyName('WFC'))) %>% 
+  dyAxis('y', label = '%') %>% 
+  dyOptions(colors = RColorBrewer::brewer.pal(3, 'Set2')) %>%
+  dyLegend(show='always')
 
 
+# Allocate weights to the portfolio
+weight <- c(.30, .20, .20, .10, .20)
 
+# Calculate the monthly returns of the portfolio according to the weights
+portfolioReturns <- Return.portfolio(mergedReturns, weights = weight)
 
+dygraph(portfolioReturns, main='Portfolio Monthly Returns') %>%
+  dyAxis('y', label = '%')
 
+# Instead of looking at monthly returns let's look at how $1 would have grown in this portfolio
+dollarGrowth <- Return.portfolio(mergedReturns, weights = weight, wealth.index = TRUE)
 
+dygraph(dollarGrowth, main = 'Growth of $1 Invested in Portfolio') %>% dyAxis('y', label = '%')
 
+# Calculate the Sharpe ratio
+portfolioExcessReturns <- Return.excess(portfolioReturns, Rf=.0003)
+sharpeRatio <- round(mean(portfolioExcessReturns)/StdDev(portfolioExcessReturns), 4)
+sharpeRatio
+
+sharpeRatio <- round(SharpeRatio(portfolioReturns, Rf=.0003), 4)
+sharpeRatio
