@@ -5,9 +5,9 @@ setwd('./nyse-financial-stocks/')
 files <- list.files(pattern = "*.csv")
 stockCol <- c("Date", "Financial Institution", "Location", "High", "Low", "Open", "Close", 
               "Aggregated data 2 days", "Aggregated data 3 days", "Aggregated data 5 days",
-              "Volume", "Number of employees", "Net change 0 (numeric)", "Net change 0 (Nominal)",
-              "Net change 5 (numeric)", "Net change 5 (nominal)", "Net change 25 (numeric)", 
-              "Net change 25 (nominal)")
+              "Volume", "Number of employees", "Net change 0-numeric", "Net change 0-nominal",
+              "Net change 5-numeric", "Net change 5-nominal", "Net change 25-numeric", 
+              "Net change 25-nominal")
 stockDf <- do.call(rbind, lapply(files, function(x) read.csv(x, stringsAsFactors = FALSE,
                   header = TRUE, col.names = stockCol)))
 
@@ -38,6 +38,15 @@ companyDetails$Date.first.added <- dmy(companyDetails$Date.first.added)
 library(stringr)
 stockDf$Number.of.employees <- str_replace(stockDf$Number.of.employees, pattern = ',', replacement = '')
 stockDf$Number.of.employees <- as.numeric(stockDf$Number.of.employees)
+
+# Fix the string that should be formatted as factors
+stockDf$Net.change.0.nominal <- as.factor(stockDf$Net.change.0.nominal)
+stockDf$Net.change.5.nominal <- as.factor(stockDf$Net.change.5.nominal)
+stockDf$Net.change.25.nominal <- as.factor(stockDf$Net.change.25.nominal)
+
+companyDetails$SEC.filings <- as.factor(companyDetails$SEC.filings)
+companyDetails$GICS.Sector <- as.factor(companyDetails$GICS.Sector)
+companyDetails$GICS.Sub.Industry <- as.factor(companyDetails$GICS.Sub.Industry)
 
 # Check the structure of the dataset after conversion
 str(stockDf)
