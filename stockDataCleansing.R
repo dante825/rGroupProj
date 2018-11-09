@@ -53,6 +53,18 @@ companyDetails$SEC.filings <- as.factor(companyDetails$SEC.filings)
 companyDetails$GICS.Sector <- as.factor(companyDetails$GICS.Sector)
 companyDetails$GICS.Sub.Industry <- as.factor(companyDetails$GICS.Sub.Industry)
 
+levels(stockDf$Net.change.0.nominal)
+levels(stockDf$Net.change.5.nominal)
+levels(stockDf$Net.change.25.nominal)
+
+levels(stockDf$Net.change.0.nominal) <- c("Unknown", "Equal", "Negative", "Positive")
+levels(stockDf$Net.change.5.nominal) <- c("Unknown", "Equal", "Negative", "Positive")
+levels(stockDf$Net.change.25.nominal) <- c("Unknown", "Equal", "Negative", "Positive")
+
+levels(companyDetails$SEC.filings)
+levels(companyDetails$GICS.Sector)
+levels(companyDetails$GICS.Sub.Industry)
+
 # Check the structure of the dataset after conversion
 str(stockDf)
 glimpse(stockDf)
@@ -64,6 +76,35 @@ glimpse(companyDetails)
 sum(is.na(stockDf))
 sum(is.na(companyDetails))
 
+# Find out where is the NA
+stockDf[!complete.cases(stockDf),]
+nrow(stockDf[!complete.cases(stockDf),])
+View(stockDf[!complete.cases(stockDf),])
+
+# Most of the NAs are from the column Net.change.25.numeric
+sum(is.na(stockDf$Net.change.25.numeric))
+# Fill in the NAs with the mean from the column
+stockDf$Net.change.25.numeric[is.na(stockDf$Net.change.25.numeric)] <- mean(stockDf$Net.change.25.numeric, 
+                                                                            na.rm=T)
+# Another column with NAs
+sum(is.na(stockDf$Net.change.5.numeric))
+stockDf$Net.change.5.numeric[is.na(stockDf$Net.change.5.numeric)] <- mean(stockDf$Net.change.5.numeric, 
+                                                                            na.rm=T)
+# Removed all the NAs from the stock dataframe
+sum(is.na(stockDf))
+
+# Find the NAs in the company dataframe
+companyDetails[!complete.cases(companyDetails),]
+nrow(companyDetails[!complete.cases(companyDetails),])
+View(companyDetails[!complete.cases(companyDetails),])
+sum(is.na(companyDetails$Date.first.added))
+
+# Replace the NAs with the date column with a date
+companyDetails$Date.first.added[is.na(companyDetails$Date.first.added)] <- dmy('01-01-1970')
+
+# Removed all the NAs in the company data frame
+sum(is.na(companyDetails))
+
 # Check unique stock
 unique(stockDf$Stock)
 length(unique(stockDf$Stock))
@@ -71,8 +112,7 @@ length(unique(stockDf$Stock))
 unique(companyDetails$Stock)
 length(unique(companyDetails$Stock))
 
-
-# Function  to get stock details
+# Function  to get company details with the stock code
 getCompanyDetails <- function(tickerSym) {
   stock <- companyDetails[which(companyDetails$Stock==tickerSym),]
   return(stock)
@@ -91,30 +131,35 @@ getCompanyName(tickerSym = 'AXP')
 getCompanyName(tickerSym = 'ABT')
 getCompanyName(tickerSym = 'ALB')
 
-# Merge the 2 dataset
+# Merge the 2 dataset with left join with the similar column Stock
 stockData <- left_join(stockDf, companyDetails, by = c('Stock'))
 colnames(stockData)
 dim(stockData)
 View(stockData)
 
-# Remove unneeded columns
+# Select the columns for further analysis
 stockData <- select(stockData, c("Date", "Stock", "High", "Low", "Open", "Close", 
-                                 "Volume", "Company", "GICS.Sector", "GICS.Sub.Industry"))
+                                 "Volume", "Company", "GICS.Sector", "GICS.Sub.Industry", 
+                                 "Net.change.0.numeric", "Net.change.0.nominal"))
 colnames(stockData)
-# Rename the columns
-names(stockData) <- c("Date", "StockCode", "High", "Low", "Open", "Close", "Volume", "Company", "Sector", "Sub-industry")
+dim(stockData)
+
+# Rename the columns to intuitive names
+names(stockData) <- c("Date", "StockCode", "High", "Low", "Open", "Close", "Volume", "Company", 
+                      "Sector", "SubIndustry", "NetChange", "NetChangeNominal")
 colnames(stockData)
 View(stockData)
 
-# Check the number of NAs
-sum(is.na(stockData)) # No NA after removing unnecessary columns
-
 # Create new columns from the existing columns
-stockData <- stockData %>% mutate(OpenCloseDiff = Open - Close, HighLowDiff = High - Low)
+stockData <- stockData %>% mutate(HighLowDiff = High - Low)
 colnames(stockData)
 glimpse(stockData)
 
-# Visualize some of the data
+# Cleansing END. The data is cleaned and merged
+
+# Data Visualization
+
+# Closing price of a certain stock
 plotClosePrice <- function(code) {
   subStock <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017'))
   plot(x = subStock$Date, y = subStock$Close, main=paste("Closing price for", getCompanyName(code)),
@@ -122,6 +167,15 @@ plotClosePrice <- function(code) {
 }
 
 plotClosePrice(code="BAC")
+
+# High Low difference of a stock
+plotHighLowDiff <- function(code) {
+  subStock <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017'))
+  plot(x = subStock$Date, y = subStock$HighLowDiff, main = paste("High-Low Difference for", getCompanyName(code)),
+       xlab = 'Year 2017', ylab = 'High-Low Difference, $', type = 'l')
+}
+
+plotHighLowDiff(code='BAC')
 
 # Converting dataframe to timeseries and get the monthly returns
 library(xts)
