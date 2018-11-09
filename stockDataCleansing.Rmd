@@ -28,15 +28,20 @@ However, not all the columns names in the files are identical, different files h
 ```{r loadData}
 setwd('./nyse-financial-stocks/')
 files <- list.files(pattern = "*.csv")
-colNames <- c("Date", "Financial Institution", "Location", "High", "Low", "Open", "Close", 
+# The column names for the imported stock datasets
+stockCol <- c("Date", "Stock", "Location", "High", "Low", "Open", "Close", 
               "Aggregated data 2 days", "Aggregated data 3 days", "Aggregated data 5 days",
-              "Volume", "Number of employees", "Net change 0 (numeric)", "Net change 0 (Nominal)",
-              "Net change 5 (numeric)", "Net change 5 (nominal)", "Net change 25 (numeric)", 
-              "Net change 25 (nominal)")
+              "Volume", "Number of employees", "Net change 0-numeric", "Net change 0-nominal",
+              "Net change 5-numeric", "Net change 5-nominal", "Net change 25-numeric", 
+              "Net change 25-nominal")
+# Read the 20 source files and merge them into a single dataframe
 stockDf <- do.call(rbind, lapply(files, function(x) read.csv(x, stringsAsFactors = FALSE,
-                  header = TRUE, col.names = colNames)))
+                                                             header = TRUE, col.names = stockCol)))
 
-companyDetails <- read.csv('../securities.csv', stringsAsFactors = FALSE)
+# The column names for the imported company dataset
+companyCol <- c('Stock', 'Company', 'SEC filings', 'GICS Sector', 'GICS Sub Industry', 'HQ Address',
+                'Date first added', 'CIK')
+companyDetails <- read.csv('../securities.csv', stringsAsFactors = FALSE, col.names = companyCol)
 ```
 
 Dimension of the dataset loaded
@@ -79,6 +84,28 @@ stockDf$Number.of.employees <- str_replace(stockDf$Number.of.employees, pattern 
 stockDf$Number.of.employees <- as.numeric(stockDf$Number.of.employees)
 ```
 
+Some of the text would be better if formatted into factors
+```{r textToFactors}
+stockDf$Net.change.0.nominal <- as.factor(stockDf$Net.change.0.nominal)
+stockDf$Net.change.5.nominal <- as.factor(stockDf$Net.change.5.nominal)
+stockDf$Net.change.25.nominal <- as.factor(stockDf$Net.change.25.nominal)
+
+companyDetails$SEC.filings <- as.factor(companyDetails$SEC.filings)
+companyDetails$GICS.Sector <- as.factor(companyDetails$GICS.Sector)
+companyDetails$GICS.Sub.Industry <- as.factor(companyDetails$GICS.Sub.Industry)
+
+levels(stockDf$Net.change.0.nominal) <- c("Unknown", "Equal", "Negative", "Positive")
+levels(stockDf$Net.change.5.nominal) <- c("Unknown", "Equal", "Negative", "Positive")
+levels(stockDf$Net.change.25.nominal) <- c("Unknown", "Equal", "Negative", "Positive")
+
+levels(stockDf$Net.change.0.nominal)
+levels(stockDf$Net.change.5.nominal)
+levels(stockDf$Net.change.25.nominal)
+
+levels(companyDetails$SEC.filings)
+levels(companyDetails$GICS.Sector)
+levels(companyDetails$GICS.Sub.Industry)
+```
 <br>
 
 Check the structure of the data after converting
@@ -98,22 +125,56 @@ kable(head(companyDetails, 10, format='markdown'))
 
 <br>
 
+### NAs management
 Check if the data has NA
 ```{r checkNa}
 sum(is.na(stockDf))
 sum(is.na(companyDetails))
 ```
-There are some NA values in the datasets but let's move on first because we would remove some columns.
 
+Cleansing the NAs of the stock dataframe
+``` {r naCleansingStock}
+# stockDf[!complete.cases(stockDf),]
+nrow(stockDf[!complete.cases(stockDf),])
+# Most of the NAs are from the column Net.change.25.numeric
+sum(is.na(stockDf$Net.change.25.numeric))
+# Fill in the NAs with the mean from the column
+stockDf$Net.change.25.numeric[is.na(stockDf$Net.change.25.numeric)] <- mean(stockDf$Net.change.25.numeric, 
+                                                                            na.rm=T)
+# Another column with NAs
+sum(is.na(stockDf$Net.change.5.numeric))
+stockDf$Net.change.5.numeric[is.na(stockDf$Net.change.5.numeric)] <- mean(stockDf$Net.change.5.numeric, 
+                                                                            na.rm=T)
+```
+
+<br>
+
+Cleansing the NAs of the company dataframe
+```{r naCleasingCompany}
+# Find the NAs in the company dataframe
+# companyDetails[!complete.cases(companyDetails),]
+nrow(companyDetails[!complete.cases(companyDetails),])
+sum(is.na(companyDetails$Date.first.added))
+
+# Replace the NAs with the date column with a date
+companyDetails$Date.first.added[is.na(companyDetails$Date.first.added)] <- dmy('01-01-1970')
+
+```
+
+Check if all the NAs are removed
+```{r naCheck}
+sum(is.na(stockDf))
+sum(is.na(companyDetails))
+```
 <br>
 
 Check the number of distinct stocks in the dataset
 ```{r checkDistinctStock}
-unique(stockDf$Financial.Institution)
-length(unique(stockDf$Financial.Institution))
+unique(stockDf$Stock)
+length(unique(stockDf$Stock))
 
-unique(companyDetails$Ticker.symbol)
-length(unique(companyDetails$Ticker.symbol))
+unique(companyDetails$Stock)
+length(unique(companyDetails$Stock))
 ```
 
 <br>
@@ -122,12 +183,12 @@ Functions to get stock details
 ```{r stockDetails}
 # Function  to get stock details
 getCompanyDetails <- function(tickerSym) {
-  stock <- companyDetails[which(companyDetails$Ticker.symbol==tickerSym),]
+  stock <- companyDetails[which(companyDetails$Stock==tickerSym),]
   return(stock)
 }
 
 getCompanyName <- function(tickerSym) {
-  companyName <- companyDetails[which(companyDetails$Ticker.symbol==tickerSym),]$Security
+  companyName <- companyDetails[which(companyDetails$Stock==tickerSym),]$Company
   return(companyName)
 }
 
@@ -144,7 +205,7 @@ getCompanyName(tickerSym = 'ALB')
 
 ### Merge the 2 dataset together
 ```{r mergeDataset}
-stockData <- merge(stockDf, companyDetails, by.x = c('Financial.Institution'), by.y = c('Ticker.symbol'))
+stockData <- left_join(stockDf, companyDetails, by = c('Stock'))
 colnames(stockData)
 ```
 
@@ -152,11 +213,12 @@ colnames(stockData)
 
 ### Remove some columns
 ```{r removeCol}
-stockData <- select(stockData, c("Date", "Financial.Institution", "High", "Low", "Open", "Close", 
-                                  "Volume", "Security", "GICS.Sector", "GICS.Sub.Industry"))
-colnames(stockData)
+stockData <- select(stockData, c("Date", "Stock", "High", "Low", "Open", "Close", 
+                                 "Volume", "Company", "GICS.Sector", "GICS.Sub.Industry", 
+                                 "Net.change.0.numeric", "Net.change.0.nominal"))
 # Rename the columns
-names(stockData) <- c("Date", "StockCode", "High", "Low", "Open", "Close", "Volume", "Company", "Sector", "Sub-industry")
+names(stockData) <- c("Date", "StockCode", "High", "Low", "Open", "Close", "Volume", "Company", 
+                      "Sector", "SubIndustry", "NetChange", "NetChangeNominal")
 colnames(stockData)
 ```
 
@@ -168,16 +230,9 @@ kable(head(stockData, 10), format="markdown")
 ```
 <br>
 
-Check the number of NA again after cleaning
-```{r checkNa2}
-sum(is.na(stockData))
-```
-No NA now, after removing the columns
-
-<br>
-
-Function to visualize the data
-```{r plotFunction}
+### Function to visualize the data
+Function to plot the closing price
+```{r plotCloseFunction}
 plotClosing <- function(code) {
   subStock <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017'))
   plot(x = subStock$Date, y = subStock$Close, main=paste("Closing price for", getCompanyName(code)),
@@ -187,6 +242,14 @@ plotClosing <- function(code) {
 plotClosing(code="BAC")
 ```
 
-<br>
+Function to plot the High-Low difference
+```{r plotHighLowFunction}
+plotHighLowDiff <- function(code) {
+  subStock <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017'))
+  plot(x = subStock$Date, y = subStock$HighLowDiff, main = paste("High-Low Difference for", getCompanyName(code)), xlab = 'Year 2017', ylab = 'High-Low Difference, $', type = 'l')
+}
 
-Next part maybe calculated sharpeRatio, moving averages or something
+plotHighLowDiff(code='BAC')
+```
+
+<br>
