@@ -176,25 +176,3 @@ plotHighLowDiff <- function(code) {
 }
 
 plotHighLowDiff(code='BAC')
-
-# Converting dataframe to timeseries and get the monthly returns
-library(xts)
-library(quantmod)
-
-getMonthlyReturn <- function(code) {
-  df <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017')) %>% 
-    select(Date, High, Low, Open, Close, Volume)
-  ts <- xts(df[,-1], order.by = df$Date) 
-  monthly <- monthlyReturn(ts, type='log')
-  return(monthly)
-}
-
-jpmMonthly <- getMonthlyReturn('JPM')
-head(jpmMonthly)
-bacMonthly <- getMonthlyReturn('BAC')
-
-plotMonthlyReturns <- function(monthly, code) {
-  plot(monthly, main=paste("Monthly Returns for", getCompanyName(code)), ylab = "Monthly returns, $", type='l')
-}
-plotMonthlyReturns(jpmMonthly, 'JPM')
-plotMonthlyReturns(bacMonthly, 'BAC')
