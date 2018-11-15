@@ -22,7 +22,7 @@ The dataset selected is a stock datasets. It contain details about some stocks t
 
 First the 20 csv files are loaded at once and rbind the data frames together, since they have the same columns.
 
-However, not all the columns names in the files are identical, different files have some differences in spacing. The data frames can't be rbind if the column names are not identical. Therefore, the column names are given in a vector rather than using what is given on the CSV files. Rbind is carried out by ignoring the column names and column names for the data frame would be assigned.
+However, not all the columns names in the files are identical, different files have some differences in spacing. The data frames can't be rbind if the column names are not identical. Therefore, the column names are given in a vector rather than using what is given on the CSV files. With the same column names for all the dataframes, then it can be rbind into a single dataframe.
 
 ### Load the dataset
 ```{r loadData}
@@ -52,21 +52,20 @@ dim(companyDetails)
 
 <br>
 
-Structure of the stock data frame
+Structure of the *stock* data frame
 ```{r stockStructure}
 str(stockDf)
 ```
 Date column is not in date format.<br>
-Number of employees columns is in character, not numeric.
+Number of employees column is in character, not numeric.
 
 <br>
 
-Structure of the company details data frame
+Structure of the *company details* data frame
 ```{r companyStructure}
 str(companyDetails)
 ```
 Date first added is not in date format.<br>
-CIK number is in integer form, can be either change to factor or remain as int.
 
 <br>
 
@@ -113,7 +112,7 @@ Check the structure of the data after converting
 str(stockDf)
 str(companyDetails)
 ```
-The incorrect data formats are not correctly represented.
+The incorrect data formats are now correctly represented.
 
 <br>
 
@@ -168,6 +167,7 @@ sum(is.na(companyDetails))
 ```
 <br>
 
+### Pre-analysis
 Check the number of distinct stocks in the dataset
 ```{r checkDistinctStock}
 unique(stockDf$Stock)
@@ -203,7 +203,7 @@ getCompanyName(tickerSym = 'ALB')
 
 <br>
 
-### Merge the 2 dataset together
+### Merge the dataset
 ```{r mergeDataset}
 stockData <- left_join(stockDf, companyDetails, by = c('Stock'))
 colnames(stockData)

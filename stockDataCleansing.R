@@ -99,7 +99,7 @@ nrow(companyDetails[!complete.cases(companyDetails),])
 View(companyDetails[!complete.cases(companyDetails),])
 sum(is.na(companyDetails$Date.first.added))
 
-# Replace the NAs with the date column with a date
+# Replace the NAs in the date column with a date
 companyDetails$Date.first.added[is.na(companyDetails$Date.first.added)] <- dmy('01-01-1970')
 
 # Removed all the NAs in the company data frame

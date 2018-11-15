@@ -133,7 +133,7 @@ $(document).ready(function () {
 <h2>Stock datasets</h2>
 <p>The dataset selected is a stock datasets. It contain details about some stocks that have been collected over several years, 2012 to 2017. The dataset for the stocks are stored on 20 CSV files. There is another CSV file namely securities.csv that contains the information about the stock companies.</p>
 <p>First the 20 csv files are loaded at once and rbind the data frames together, since they have the same columns.</p>
-<p>However, not all the columns names in the files are identical, different files have some differences in spacing. The data frames can’t be rbind if the column names are not identical. Therefore, the column names are given in a vector rather than using what is given on the CSV files. Rbind is carried out by ignoring the column names and column names for the data frame would be assigned.</p>
+<p>However, not all the columns names in the files are identical, different files have some differences in spacing. The data frames can’t be rbind if the column names are not identical. Therefore, the column names are given in a vector rather than using what is given on the CSV files. With the same column names for all the dataframes, then it can be rbind into a single dataframe.</p>
 <div id="load-the-dataset" class="section level3">
 <h3>Load the dataset</h3>
 <pre class="r"><code>setwd('./nyse-financial-stocks/')
@@ -158,7 +158,7 @@ companyDetails &lt;- read.csv('../securities.csv', stringsAsFactors = FALSE, col
 <pre class="r"><code>dim(companyDetails)</code></pre>
 <pre><code>## [1] 505   8</code></pre>
 <p><br></p>
-<p>Structure of the stock data frame</p>
+<p>Structure of the <em>stock</em> data frame</p>
 <pre class="r"><code>str(stockDf)</code></pre>
 <pre><code>## 'data.frame':    25180 obs. of  18 variables:
 ##  $ Date                  : chr  &quot;30/11/2012&quot; &quot;3/12/2012&quot; &quot;4/12/2012&quot; &quot;5/12/2012&quot; ...
@@ -179,9 +179,9 @@ companyDetails &lt;- read.csv('../securities.csv', stringsAsFactors = FALSE, col
 ##  $ Net.change.5.nominal  : chr  &quot;Positive&quot; &quot;Positive&quot; &quot;Positive&quot; &quot;Positive&quot; ...
 ##  $ Net.change.25.numeric : num  4 4.11 4.36 4.9 4.94 4.96 4.09 3.62 3.39 2.12 ...
 ##  $ Net.change.25.nominal : chr  &quot;Positive&quot; &quot;Positive&quot; &quot;Positive&quot; &quot;Positive&quot; ...</code></pre>
-<p>Date column is not in date format.<br> Number of employees columns is in character, not numeric.</p>
+<p>Date column is not in date format.<br> Number of employees column is in character, not numeric.</p>
 <p><br></p>
-<p>Structure of the company details data frame</p>
+<p>Structure of the <em>company details</em> data frame</p>
 <pre class="r"><code>str(companyDetails)</code></pre>
 <pre><code>## 'data.frame':    505 obs. of  8 variables:
 ##  $ Stock            : chr  &quot;MMM&quot; &quot;ABT&quot; &quot;ABBV&quot; &quot;ACN&quot; ...
@@ -192,7 +192,7 @@ companyDetails &lt;- read.csv('../securities.csv', stringsAsFactors = FALSE, col
 ##  $ HQ.Address       : chr  &quot;St. Paul, Minnesota&quot; &quot;North Chicago, Illinois&quot; &quot;North Chicago, Illinois&quot; &quot;Dublin, Ireland&quot; ...
 ##  $ Date.first.added : chr  &quot;&quot; &quot;31/3/1964&quot; &quot;31/12/2012&quot; &quot;6/7/2011&quot; ...
 ##  $ CIK              : int  66740 1800 1551152 1467373 718877 1144215 796343 1158449 874761 1122304 ...</code></pre>
-<p>Date first added is not in date format.<br> CIK number is in integer form, can be either change to factor or remain as int.</p>
+<p>Date first added is not in date format.<br></p>
 <p><br></p>
 </div>
 <div id="fix-the-format-of-the-data" class="section level3">
@@ -389,7 +389,7 @@ levels(stockDf$Net.change.0.nominal)</code></pre>
 ##  $ HQ.Address       : chr  &quot;St. Paul, Minnesota&quot; &quot;North Chicago, Illinois&quot; &quot;North Chicago, Illinois&quot; &quot;Dublin, Ireland&quot; ...
 ##  $ Date.first.added : Date, format: NA &quot;1964-03-31&quot; ...
 ##  $ CIK              : int  66740 1800 1551152 1467373 718877 1144215 796343 1158449 874761 1122304 ...</code></pre>
-<p>The incorrect data formats are not correctly represented.</p>
+<p>The incorrect data formats are now correctly represented.</p>
 <p><br></p>
 </div>
 <div id="view-the-data" class="section level3">
@@ -798,6 +798,9 @@ companyDetails$Date.first.added[is.na(companyDetails$Date.first.added)] &lt;- dm
 <pre class="r"><code>sum(is.na(companyDetails))</code></pre>
 <pre><code>## [1] 0</code></pre>
 <p><br></p>
+</div>
+<div id="pre-analysis" class="section level3">
+<h3>Pre-analysis</h3>
 <p>Check the number of distinct stocks in the dataset</p>
 <pre class="r"><code>unique(stockDf$Stock)</code></pre>
 <pre><code>##  [1] &quot;AXP&quot;  &quot;BAC&quot;  &quot;BBT&quot;  &quot;C&quot;    &quot;CMA&quot;  &quot;COF&quot;  &quot;DFS&quot;  &quot;FITB&quot; &quot;GS&quot;   &quot;JPM&quot; 
@@ -907,8 +910,8 @@ getCompanyDetails(tickerSym = 'AXP')</code></pre>
 <pre><code>## [1] &quot;Albemarle Corp&quot;</code></pre>
 <p><br></p>
 </div>
-<div id="merge-the-2-dataset-together" class="section level3">
-<h3>Merge the 2 dataset together</h3>
+<div id="merge-the-dataset" class="section level3">
+<h3>Merge the dataset</h3>
 <pre class="r"><code>stockData &lt;- left_join(stockDf, companyDetails, by = c('Stock'))
 colnames(stockData)</code></pre>
 <pre><code>##  [1] &quot;Date&quot;                   &quot;Stock&quot;                 
