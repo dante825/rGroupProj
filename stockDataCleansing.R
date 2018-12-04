@@ -158,12 +158,16 @@ glimpse(stockData)
 # Cleansing END. The data is cleaned and merged
 
 # Data Visualization
+library(ggplot2)
 
 # Closing price of a certain stock
 plotClosePrice <- function(code) {
   subStock <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017'))
-  plot(x = subStock$Date, y = subStock$Close, main=paste("Closing price for", getCompanyName(code)),
-       xlab="Year 2017", ylab="Closing Price, $", type='l')
+  ggplot(data = subStock, aes(x=Date, y=Close)) +
+    geom_line(color='Blue') +
+    ggtitle(paste('Closing Price for', getCompanyName(code))) +
+    xlab('2017') +
+    ylab('Closing Price, $')
 }
 
 plotClosePrice(code="BAC")
@@ -171,8 +175,23 @@ plotClosePrice(code="BAC")
 # High Low difference of a stock
 plotHighLowDiff <- function(code) {
   subStock <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017'))
-  plot(x = subStock$Date, y = subStock$HighLowDiff, main = paste("High-Low Difference for", getCompanyName(code)),
-       xlab = 'Year 2017', ylab = 'High-Low Difference, $', type = 'l')
+  ggplot(data=subStock, aes(x=Date, y=HighLowDiff)) +
+    ggtitle(paste('High-Low Difference for', getCompanyName(code))) +
+    geom_line(color='blue') +
+    xlab('2017') +
+    ylab('High-Low Difference, $')
 }
 
 plotHighLowDiff(code='BAC')
+
+# Volume
+plotVolume <- function(code) {
+  substock <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017'))
+  ggplot(data=substock, aes(x=Date, y=Volume)) +
+    geom_line(color='blue') +
+    ggtitle(paste('Volume of', getCompanyName(code))) +
+    xlab('2017') +
+    ylab('Volume')
+}
+
+plotVolume(code='BAC')
