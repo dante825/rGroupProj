@@ -78,6 +78,7 @@ sum(is.na(companyDetails))
 
 # Find out where is the NA
 stockDf[!complete.cases(stockDf),]
+sapply(stockDf, function (x) sum(is.na(x)))
 nrow(stockDf[!complete.cases(stockDf),])
 View(stockDf[!complete.cases(stockDf),])
 
@@ -95,6 +96,7 @@ sum(is.na(stockDf))
 
 # Find the NAs in the company dataframe
 companyDetails[!complete.cases(companyDetails),]
+sapply(companyDetails, function (x) sum(is.na(x)))
 nrow(companyDetails[!complete.cases(companyDetails),])
 View(companyDetails[!complete.cases(companyDetails),])
 sum(is.na(companyDetails$Date.first.added))
