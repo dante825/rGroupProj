@@ -161,40 +161,108 @@ glimpse(stockData)
 
 ############# Exploratory Data Analysis #################
 library(ggplot2)
+library(gridExtra)
 
+# Function to get year range for the plot functions
+getYear <- function(year) {
+  vec <- c()
+  if (year == '2013') {
+    vec <- c('2013', '01-01-2013', '31-12-2013')
+  } else if (year == '2014') {
+    vec <- c('2014', '01-01-2014', '31-12-2014')
+  } else if (year == '2015') {
+    vec <- c('2015', '01-01-2015', '31-12-2015')
+  } else if (year == '2016') {
+    vec <- c('2016', '01-01-2016', '31-12-2016')
+  } else if (year == '2017') {
+    vec <- c('2017', '01-01-2017', '31-12-2017')
+  } else {
+    vec <- c()
+  }
+  
+  return (vec)
+}
 # Closing price of a certain stock
-plotClosePrice <- function(code) {
-  subStock <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017'))
+plotClosePrice <- function(code, year='2017') {
+  yearVec <- getYear(year)
+  subStock <- stockData %>% filter(StockCode==code, Date >= dmy(yearVec[2]) & Date <= dmy(yearVec[3]))
   ggplot(data = subStock, aes(x=Date, y=Close)) +
     geom_line(color='Blue') +
     ggtitle(paste('Closing Price for', getCompanyName(code))) +
-    xlab('2017') +
+    xlab(yearVec[1]) +
     ylab('Closing Price, $')
 }
 
-plotClosePrice(code="BAC")
+plotClosePrice(code="BAC", year='2016')
 
 # High Low difference of a stock
-plotHighLowDiff <- function(code) {
-  subStock <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017'))
+plotHighLowDiff <- function(code, year='2017') {
+  yearVec <- getYear(year)
+  subStock <- stockData %>% filter(StockCode==code, Date >= dmy(yearVec[2]) & Date <= dmy(yearVec[3]))
   ggplot(data=subStock, aes(x=Date, y=HighLowDiff)) +
     ggtitle(paste('High-Low Difference for', getCompanyName(code))) +
     geom_line(color='blue') +
-    xlab('2017') +
+    xlab(yearVec[1]) +
     ylab('High-Low Difference, $')
 }
 
-plotHighLowDiff(code='BAC')
+plotHighLowDiff(code='BAC', year='2016')
 
 # Volume
-plotVolume <- function(code) {
-  substock <- stockData %>% filter(StockCode==code, Date >= dmy('01-01-2017'))
+plotVolume <- function(code, year='2017') {
+  yearVec <- getYear(year)
+  substock <- stockData %>% filter(StockCode==code, Date >= dmy(yearVec[2]) & Date <= dmy(yearVec[3]))
   ggplot(data=substock, aes(x=Date, y=Volume)) +
     geom_line(color='blue') +
     ggtitle(paste('Volume of', getCompanyName(code))) +
-    xlab('2017') +
-    ylab('Volume') +
-    scale_y_continuous(labels = scales::comma)
+    xlab(yearVec[1]) +
+    ylab('Volume')
+    # scale_y_continuous(labels = scales::comma)
 }
 
-plotVolume(code='BAC')
+plotVolume(code='BAC', year='2017')
+
+# Comparing the year on year closing price
+BACClo2013 <- plotClosePrice(code = 'BAC', year = '2013')
+BACClo2014 <- plotClosePrice(code = 'BAC', year = '2014')
+BACClo2015 <- plotClosePrice(code = 'BAC', year = '2015')
+BACClo2016 <- plotClosePrice(code = 'BAC', year = '2016')
+BACClo2017 <- plotClosePrice(code = 'BAC', year = '2017')
+grid.arrange(BACClo2013, BACClo2014, BACClo2015, BACClo2016, BACClo2017, ncol=2)
+# Closing price rises at the end of the years
+
+# Comparing the year on year sales volume
+BACVol2013 <- plotVolume(code = 'BAC', year = '2013')
+BACVol2014 <- plotVolume(code = 'BAC', year = '2014')
+BACVol2015 <- plotVolume(code = 'BAC', year = '2015')
+BACVol2016 <- plotVolume(code = 'BAC', year = '2016')
+BACVol2017 <- plotVolume(code = 'BAC', year = '2017')
+grid.arrange(BACVol2013, BACVol2014, BACVol2015, BACVol2016, BACVol2017, ncol=2)
+# Volume drop at the end of the years
+
+# Comparing High low differences
+BACPri2013 <- plotHighLowDiff(code = 'BAC', year = '2013')
+BACPri2014 <- plotHighLowDiff(code = 'BAC', year = '2014')
+BACPri2015 <- plotHighLowDiff(code = 'BAC', year = '2015')
+BACPri2016 <- plotHighLowDiff(code = 'BAC', year = '2016')
+BACPri2017 <- plotHighLowDiff(code = 'BAC', year = '2017')
+grid.arrange(BACPri2013, BACPri2014, BACPri2015, BACPri2016, BACPri2017, ncol=2)
+
+
+# Exploring the relationship between High and Volume
+BACStock <- stockData %>% subset(Date >= dmy('01-01-2017'))
+cor(BACStock$Volume, BACStock$Close)
+cor(BACStock$Volume, BACStock$High)
+ggplot(BACStock, aes(x=High, y=Volume)) +
+  geom_line(color='blue')
+
+cor(BACStock$High, BACStock$Close)
+cor(BACStock$Close, BACStock$Low)
+cor(BACStock$High, BACStock$Low)
+ggplot(BACStock, aes(x=Close, y=High)) +
+  geom_point(color='blue')
+ggplot(BACStock, aes(x=Close, y=Low)) +
+  geom_point(color='blue')
+ggplot(BACStock, aes(x=High, y=Low)) +
+  geom_point(color='blue')
+# There is a corelation between High, Close, Low
