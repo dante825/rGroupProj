@@ -179,9 +179,9 @@ getYear <- function(year) {
   } else {
     vec <- c()
   }
-  
   return (vec)
 }
+
 # Closing price of a certain stock
 plotClosePrice <- function(code, year='2017') {
   yearVec <- getYear(year)
@@ -250,7 +250,7 @@ grid.arrange(BACPri2013, BACPri2014, BACPri2015, BACPri2016, BACPri2017, ncol=2)
 
 
 # Exploring the relationship between High and Volume
-BACStock <- stockData %>% subset(Date >= dmy('01-01-2017'))
+BACStock <- stockData %>% filter(StockCode == 'BAC', Date >= dmy('01-01-2017'))
 cor(BACStock$Volume, BACStock$Close)
 cor(BACStock$Volume, BACStock$High)
 ggplot(BACStock, aes(x=High, y=Volume)) +
@@ -259,10 +259,35 @@ ggplot(BACStock, aes(x=High, y=Volume)) +
 cor(BACStock$High, BACStock$Close)
 cor(BACStock$Close, BACStock$Low)
 cor(BACStock$High, BACStock$Low)
+cor(BACStock$High, BACStock$Open)
 ggplot(BACStock, aes(x=Close, y=High)) +
-  geom_point(color='blue')
+  geom_point(color='blue') +
+  geom_abline(color='red', size=1)
 ggplot(BACStock, aes(x=Close, y=Low)) +
-  geom_point(color='blue')
+  geom_point(color='blue') +
+  geom_abline(color='red', size=1)
 ggplot(BACStock, aes(x=High, y=Low)) +
-  geom_point(color='blue')
+  geom_point(color='blue') +
+  geom_abline(color='red', size=1)
 # There is a corelation between High, Close, Low
+
+
+############ Linear Regression ###############
+# Getting the training and testing dataset
+BACStockTrain <- stockData %>% filter(StockCode == 'BAC', Date < dmy('01-01-2017')) %>% 
+  select(StockCode, High, Low, Open, Close)
+BACStockTest <- stockData %>% filter(StockCode == 'BAC', Date >= dmy('01-01-2017')) %>%
+  select(StockCode, High, Low, Open, Close)
+
+# Feature scaling on the dataset
+scale(BACStockTrain[-1])
+scale(BACStockTest[-1])
+
+regressionModel <- lm(formula = Close ~ High, data=BACStockTrain)
+
+y_pred <- predict(regressionModel, newdata = BACStockTest)
+
+ggplot() +
+  geom_point(aes(x = BACStockTest$High, y = BACStockTest$Close), colour = 'red') +
+  geom_line(aes(x = BACStockTest$High, y = y_pred), colour = 'blue') +
+  labs(title = 'Prediction of Closing price using Highest price', x='High', y='Close')
