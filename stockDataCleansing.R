@@ -159,7 +159,7 @@ glimpse(stockData)
 
 # Cleansing END. The data is cleaned and merged
 
-# Data Visualization
+############# Exploratory Data Analysis #################
 library(ggplot2)
 
 # Closing price of a certain stock
@@ -193,7 +193,8 @@ plotVolume <- function(code) {
     geom_line(color='blue') +
     ggtitle(paste('Volume of', getCompanyName(code))) +
     xlab('2017') +
-    ylab('Volume')
+    ylab('Volume') +
+    scale_y_continuous(labels = scales::comma)
 }
 
 plotVolume(code='BAC')
