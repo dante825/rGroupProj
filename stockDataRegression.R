@@ -93,7 +93,7 @@ pacf(train$High,lag.max = 20) # test indicates data is stationary, model can be 
 diffstock = diff(train$High,1)
 adf.test(train$High)
 
-adf.test(diffstock) # Augmented Dickey-Fuller Test to test for stationary
+adf.test(diffstock) # Augmented Dickey-Fuller Test to test if model is stationary
 
 pricearima = ts(train$High, start = c(2012,11,30), frequency = 365)
 fitStock = auto.arima(pricearima) # auto arima selects the best order for the model
