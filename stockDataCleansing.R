@@ -80,7 +80,6 @@ sum(is.na(companyDetails))
 stockDf[!complete.cases(stockDf),]
 sapply(stockDf, function (x) sum(is.na(x)))
 nrow(stockDf[!complete.cases(stockDf),])
-View(stockDf[!complete.cases(stockDf),])
 
 # Most of the NAs are from the column Net.change.25.numeric
 sum(is.na(stockDf$Net.change.25.numeric))
@@ -98,7 +97,6 @@ sum(is.na(stockDf))
 companyDetails[!complete.cases(companyDetails),]
 sapply(companyDetails, function (x) sum(is.na(x)))
 nrow(companyDetails[!complete.cases(companyDetails),])
-View(companyDetails[!complete.cases(companyDetails),])
 sum(is.na(companyDetails$Date.first.added))
 
 # Replace the NAs in the date column with a date
@@ -137,7 +135,6 @@ getCompanyName(tickerSym = 'ALB')
 stockData <- left_join(stockDf, companyDetails, by = c('Stock'))
 colnames(stockData)
 dim(stockData)
-View(stockData)
 
 # Select the columns for further analysis
 stockData <- select(stockData, c("Date", "Stock", "High", "Low", "Open", "Close", 
@@ -250,7 +247,7 @@ grid.arrange(BACPri2013, BACPri2014, BACPri2015, BACPri2016, BACPri2017, ncol=2)
 
 
 # Exploring the relationship between High and Volume
-BACStock <- stockData %>% filter(StockCode == 'BAC', Date >= dmy('01-01-2017'))
+BACStock <- stockData %>% filter(StockCode == 'BAC')
 cor(BACStock$Volume, BACStock$Close)
 cor(BACStock$Volume, BACStock$High)
 ggplot(BACStock, aes(x=High, y=Volume)) +
@@ -260,10 +257,12 @@ cor(BACStock$High, BACStock$Close)
 cor(BACStock$Close, BACStock$Low)
 cor(BACStock$High, BACStock$Low)
 cor(BACStock$High, BACStock$Open)
-ggplot(BACStock, aes(x=Close, y=High)) +
+cor(BACStock$Open, BACStock$Close)
+cor(BACStock$Open, BACStock$High + BACStock$Low)
+ggplot(BACStock, aes(x=Open, y=High)) +
   geom_point(color='blue') +
   geom_abline(color='red', size=1)
-ggplot(BACStock, aes(x=Close, y=Low)) +
+ggplot(BACStock, aes(x=Open, y=Low)) +
   geom_point(color='blue') +
   geom_abline(color='red', size=1)
 ggplot(BACStock, aes(x=High, y=Low)) +
@@ -271,8 +270,21 @@ ggplot(BACStock, aes(x=High, y=Low)) +
   geom_abline(color='red', size=1)
 # There is a corelation between High, Close, Low
 
+Cstock <- stockData %>% filter(StockCode == 'C')
+cor(Cstock$Close, Cstock$High)
+cor(Cstock$Open, Cstock$High)
+cor(Cstock$Open, Cstock$Close)
+cor(Cstock$Open, Cstock$Low)
+
+ggplot(Cstock, aes(x = Open, y = High)) +
+  geom_point(color='blue') +
+  geom_abline(color='red', size=1)
+ggplot(Cstock, aes(x = Open, y = Close)) +
+  geom_point(color='blue') +
+  geom_abline(color='red', size=1)
 
 ############ Linear Regression ###############
+# Linear Regression with BAC stock
 # Getting the training and testing dataset
 BACStockTrain <- stockData %>% filter(StockCode == 'BAC', Date < dmy('01-01-2017')) %>% 
   select(StockCode, High, Low, Open, Close)
@@ -280,14 +292,37 @@ BACStockTest <- stockData %>% filter(StockCode == 'BAC', Date >= dmy('01-01-2017
   select(StockCode, High, Low, Open, Close)
 
 # Feature scaling on the dataset
-scale(BACStockTrain[-1])
-scale(BACStockTest[-1])
+# trainingSet <- as.data.frame(scale(BACStockTrain[-1]))
+# testSet <- as.data.frame(scale(BACStockTest[-1]))
 
-regressionModel <- lm(formula = Close ~ High, data=BACStockTrain)
+regressionModel <- lm(formula = High ~ Open, data=BACStockTrain)
 
 y_pred <- predict(regressionModel, newdata = BACStockTest)
 
+# Plot with training set
 ggplot() +
-  geom_point(aes(x = BACStockTest$High, y = BACStockTest$Close), colour = 'red') +
-  geom_line(aes(x = BACStockTest$High, y = y_pred), colour = 'blue') +
-  labs(title = 'Prediction of Closing price using Highest price', x='High', y='Close')
+  geom_point(aes(x = BACStockTrain$Open, y = BACStockTrain$High), color='blue') +
+  geom_line(aes(x = BACStockTrain$Open, y=predict(regressionModel, newdata = BACStockTrain)), color='red',size=1) +
+  labs(title = 'Open vs High (training set)', x = 'Open', y='High')
+
+# Plot with test set
+ggplot() +
+  geom_point(aes(x = BACStockTest$Open, y = BACStockTest$High), colour = 'blue') +
+  geom_line(aes(x = BACStockTest$Open, y = y_pred), colour = 'red', size=1) +
+  labs(title = 'Prediction of High price using Open price (test set)', x='Open', y='High')
+
+
+# Linear regression with C stock
+CstockTrain <- stockData %>% filter(StockCode == 'C', Date < dmy('01-01-2017')) %>%
+  select(StockCode, High, Low, Open, Close)
+CstockTest <- stockData %>% filter(StockCode == 'C', Date >= dmy('01-01-2017')) %>%
+  select(StockCode, High, Low, Open, Close)
+
+regressionModel <- lm(formula = High ~ Open, data=CstockTrain)
+
+y_pred <- predict(regressionModel, newdata = CstockTest)
+
+ggplot() +
+  geom_point(aes(x = CstockTest$Open, y=CstockTest$High), color='blue') +
+  geom_line(aes(x = CstockTest$Open, y=y_pred), color='red', size=1) +
+  labs(title='Prediction of High price with Open price', x='Open', y='High')
