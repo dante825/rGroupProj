@@ -291,10 +291,6 @@ BACStockTrain <- stockData %>% filter(StockCode == 'BAC', Date < dmy('01-01-2017
 BACStockTest <- stockData %>% filter(StockCode == 'BAC', Date >= dmy('01-01-2017')) %>%
   select(StockCode, High, Low, Open, Close)
 
-# Feature scaling on the dataset
-# trainingSet <- as.data.frame(scale(BACStockTrain[-1]))
-# testSet <- as.data.frame(scale(BACStockTest[-1]))
-
 regressionModel <- lm(formula = High ~ Open, data=BACStockTrain)
 
 y_pred <- predict(regressionModel, newdata = BACStockTest)
