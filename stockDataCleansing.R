@@ -332,33 +332,42 @@ library(MASS)
 library(forecast)
 library(tseries)
 
-# testing ARIMA on BAC stock
 full = stockData %>% filter(StockCode == "BAC") %>% dplyr::select(Date,High)
 
 # predicting only for 2 days ahead 
-# higher than that was producing very high error rate
 train = full[1:1257,] # 1:1000
 test = full[1258:1259,] # 1001:1259
 
+# Autocorrelation And Cross-Correlation Function Estimation
 acf(train$High,lag.max = 20)
-pacf(train$High,lag.max = 20) # test indicates data is stationary, model can be stationary/predictable to some degree
+
+# Partial Autocorrelation And Cross-Correlation Function Estimation
+# test indicates data is stationary, time series data is predictable to some degree
+pacf(train$High,lag.max = 20)
 
 diffstock = diff(train$High,1)
 adf.test(train$High)
 
-adf.test(diffstock) # Augmented Dickey-Fuller Test to test if model is stationary
+# Augmented Dickey-Fuller Test to test if model is stationary
+adf.test(diffstock) 
 
 pricearima = ts(train$High, start = c(2012,11,30), frequency = 365)
-fitStock = auto.arima(pricearima) # auto arima selects the best order for the model
-# fitStock = arima(pricearima, order = c(1,1,1)) 
+
+# auto arima automatically tunes the model
+fitStock = auto.arima(pricearima) 
+
 fitStock
-plot(pricearima, type = 'l')
-title("BAC High Price")
+ggplot2::autoplot(pricearima,main="High Price Values for BAC")
 
 forecastedValues = forecast(fitStock, h=2) #259
 forecastedValues
-plot(forecastedValues)
 
+# higher level view of the time series + forecast
+ggplot2::autoplot(forecast(fitStock, h=2), include = 50)
+# closer look at the time series + forecast
+ggplot2::autoplot(forecast(fitStock, h=2), include = 10) 
+
+# evaluating the mean percentage error of the forecasted prices
 finalForecastedValues = as.numeric(forecastedValues$mean)
 
 compare = data.frame(test$High,finalForecastedValues)
