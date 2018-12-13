@@ -78,8 +78,11 @@ names(stockData) <- c("Date", "StockCode", "High", "Low", "Open", "Close", "Volu
 
 
 #### Starting ARIMA Implementation ####
-# testing ARIMA on BAC stock
+library(MASS)
+library(forecast)
+library(tseries)
 
+# testing ARIMA on BAC stock
 full = stockData %>% filter(StockCode == "BAC") %>% dplyr::select(Date,High)
 
 # predicting only for 2 days ahead 
