@@ -326,3 +326,44 @@ ggplot() +
   geom_point(aes(x = CstockTest$Open, y=CstockTest$High), color='blue') +
   geom_line(aes(x = CstockTest$Open, y=y_pred), color='red', size=1) +
   labs(title='Prediction of High price with Open price', x='Open', y='High')
+
+####### ARIMA Implementation ####
+library(MASS)
+library(forecast)
+library(tseries)
+
+# testing ARIMA on BAC stock
+full = stockData %>% filter(StockCode == "BAC") %>% dplyr::select(Date,High)
+
+# predicting only for 2 days ahead 
+# higher than that was producing very high error rate
+train = full[1:1257,] # 1:1000
+test = full[1258:1259,] # 1001:1259
+
+acf(train$High,lag.max = 20)
+pacf(train$High,lag.max = 20) # test indicates data is stationary, model can be stationary/predictable to some degree
+
+diffstock = diff(train$High,1)
+adf.test(train$High)
+
+adf.test(diffstock) # Augmented Dickey-Fuller Test to test if model is stationary
+
+pricearima = ts(train$High, start = c(2012,11,30), frequency = 365)
+fitStock = auto.arima(pricearima) # auto arima selects the best order for the model
+# fitStock = arima(pricearima, order = c(1,1,1)) 
+fitStock
+plot(pricearima, type = 'l')
+title("BAC High Price")
+
+forecastedValues = forecast(fitStock, h=2) #259
+forecastedValues
+plot(forecastedValues)
+
+finalForecastedValues = as.numeric(forecastedValues$mean)
+
+compare = data.frame(test$High,finalForecastedValues)
+columns = c("ActualPrice","ForecastedPrice")
+names(compare) = columns
+percentage_error = ((compare$ActualPrice - compare$ForecastedPrice)/compare$ActualPrice)
+percentage_error
+mean(percentage_error) 
