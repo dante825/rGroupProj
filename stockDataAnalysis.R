@@ -291,20 +291,35 @@ BACStockTrain <- stockData %>% filter(StockCode == 'BAC', Date < dmy('01-01-2017
 BACStockTest <- stockData %>% filter(StockCode == 'BAC', Date >= dmy('01-01-2017')) %>%
   select(StockCode, High, Low, Open, Close)
 
-regressionModel <- lm(formula = High ~ Open, data=BACStockTrain)
+regressionBac <- lm(formula = High ~ Open, data=BACStockTrain)
 
-y_pred <- predict(regressionModel, newdata = BACStockTest)
+yPredBac <- predict(regressionBac, newdata = BACStockTest)
+
+summary(regressionBac)
+
+# Residual sum of squares
+rss <- c(crossprod(regressionBac$residuals))
+rss
+# Mean squared error
+mse <- rss / length(regressionBac$residuals)
+mse
+# Root mean squared error
+rmse <- sqrt(mse)
+rmse
+# Pearson estimated residual variance
+sig2 <- rss / regressionBac$df.residual
+sig2
 
 # Plot with training set
 ggplot() +
   geom_point(aes(x = BACStockTrain$Open, y = BACStockTrain$High), color='blue') +
-  geom_line(aes(x = BACStockTrain$Open, y=predict(regressionModel, newdata = BACStockTrain)), color='red',size=1) +
+  geom_line(aes(x = BACStockTrain$Open, y=predict(regressionBac, newdata = BACStockTrain)), color='red',size=1) +
   labs(title = 'Open vs High (training set)', x = 'Open', y='High')
 
 # Plot with test set
 ggplot() +
   geom_point(aes(x = BACStockTest$Open, y = BACStockTest$High), colour = 'blue') +
-  geom_line(aes(x = BACStockTest$Open, y = y_pred), colour = 'red', size=1) +
+  geom_line(aes(x = BACStockTest$Open, y = yPredBac), colour = 'red', size=1) +
   labs(title = 'Prediction of High price using Open price (test set)', x='Open', y='High')
 
 
@@ -314,13 +329,28 @@ CstockTrain <- stockData %>% filter(StockCode == 'C', Date < dmy('01-01-2017')) 
 CstockTest <- stockData %>% filter(StockCode == 'C', Date >= dmy('01-01-2017')) %>%
   select(StockCode, High, Low, Open, Close)
 
-regressionModel <- lm(formula = High ~ Open, data=CstockTrain)
+regressionC <- lm(formula = High ~ Open, data=CstockTrain)
 
-y_pred <- predict(regressionModel, newdata = CstockTest)
+yPredC <- predict(regressionC, newdata = CstockTest)
+
+summary(regressionC)
+
+# Residual sum of squares
+rss <- c(crossprod(regressionC$residuals))
+rss
+# Mean squared error
+mse <- rss / length(regressionC$residuals)
+mse
+# Root mean squared error
+rmse <- sqrt(mse)
+rmse
+# Pearson estimated residual variance
+sig2 <- rss / regressionC$df.residual
+sig2
 
 ggplot() +
   geom_point(aes(x = CstockTest$Open, y=CstockTest$High), color='blue') +
-  geom_line(aes(x = CstockTest$Open, y=y_pred), color='red', size=1) +
+  geom_line(aes(x = CstockTest$Open, y=yPredC), color='red', size=1) +
   labs(title='Prediction of High price with Open price', x='Open', y='High')
 
 ####### ARIMA Implementation ####
