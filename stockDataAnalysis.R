@@ -147,12 +147,12 @@ dim(stockData)
 names(stockData) <- c("Date", "StockCode", "High", "Low", "Open", "Close", "Volume", "Company", 
                       "Sector", "SubIndustry", "NetChange", "NetChangeNominal")
 colnames(stockData)
-View(stockData)
 
 # Create new columns from the existing columns
 stockData <- stockData %>% mutate(HighLowDiff = High - Low)
 colnames(stockData)
 glimpse(stockData)
+View(stockData)
 
 # Cleansing END. The data is cleaned and merged
 
